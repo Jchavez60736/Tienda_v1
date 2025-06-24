@@ -1,4 +1,7 @@
 package com.tienda.domain;
+import jakarta.persistence.*;   // <- esto es obligatorio con Spring Boot 3+
+import lombok.Data;
+import java.io.Serializable;
 
 @Data
 @Entity
