@@ -1,7 +1,9 @@
 package com.tienda.domain;
+
 import jakarta.persistence.*;   // <- esto es obligatorio con Spring Boot 3+
 import lombok.Data;
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Entity
@@ -12,9 +14,14 @@ public class Categoria implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="id_categoria")
     private Long idCategoria;
+    
     private String descripcion;
     private String rutaImagen;
     private boolean activo;
+    
+    @OneToMany
+    @JoinColumn(name="id_categoria")
+    List<Producto> productos;
     
     public Categoria() {
     }
