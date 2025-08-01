@@ -1,54 +1,92 @@
 package com.tienda;
 
 import java.util.Locale;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
-@Configuration //Esto le dice a Spring que esta clase es de configuración. 
-//Spring buscará esta clase al iniciar y aplicará lo que aquí se defina (como beans o interceptores).
-
+@Configuration
 public class ProjectConfig implements WebMvcConfigurer {
-    /* Los siguientes métodos son para incorporar el tema de internacionalización en el proyecto */
-    
-    /* localeResolver se utiliza para crear una sesión de cambio de idioma*/
+ /* Los siguientes métodos son para incorporar el tema de internacionalización en el
+proyecto */
+
+ /* localeResolver se utiliza para crear una sesión de cambio de idioma*/
     @Bean
     public LocaleResolver localeResolver() {
-        var slr = new SessionLocaleResolver(); // Usa la sesión del usuario para guardar su idioma preferido.
-        slr.setDefaultLocale(Locale.getDefault()); // Usa el idioma predeterminado del sistema (por ejemplo, español si estás en Costa Rica).
-        slr.setLocaleAttributeName("session.current.locale"); // Guarda el idioma como una variable llamada "session.current.locale".
-        slr.setTimeZoneAttributeName("session.current.timezone"); // Guarda la zona horaria en sesión (opcional).
+        var slr = new SessionLocaleResolver();
+        slr.setDefaultLocale(Locale.getDefault());
+        slr.setLocaleAttributeName("session.current.locale");
+        slr.setTimeZoneAttributeName("session.current.timezone");
         return slr;
     }
-
-    /* localeChangeInterceptor se utiliza para crear un interceptor de cambio de idioma*/
+ /* localeChangeInterceptor se utiliza para crear un interceptor de cambio de idioma*/
     @Bean
-    public LocaleChangeInterceptor localeChangeInterceptor() { // Este método permite cambiar el idioma usando un parámetro en la URL.
-        var lci = new LocaleChangeInterceptor(); // Crea un interceptor para detectar cambios de idioma.
-        lci.setParamName("lang"); // Le dice que el parámetro lang en la URL será usado para cambiar el idioma.
+    public LocaleChangeInterceptor localeChangeInterceptor() {
+        var lci = new LocaleChangeInterceptor();
+        lci.setParamName("lang");
         return lci;
     }
-
-    /* Le dice a Spring que active el interceptor anterior (localeChangeInterceptor) 
-    para que funcione cada vez que alguien navegue por la web.*/
-    @Override 
+    
+    @Override
     public void addInterceptors(InterceptorRegistry registro) {
         registro.addInterceptor(localeChangeInterceptor());
     }
-
-    //Bean para poder acceder a los Messages.properties en código...
-    // Este método carga los archivos con los textos en diferentes idiomas.
-    @Bean("messageSource") 
+ //Bean para poder acceder a los Messages.properties en código...
+    @Bean("messageSource")
     public MessageSource messageSource() {
-        ResourceBundleMessageSource messageSource= new ResourceBundleMessageSource(); //Crea el manejador para buscar los archivos messages_xx.properties.
-        messageSource.setBasenames("messages"); // Busca archivos como: messages.properties, messages_en.properties, messages_es.properties, etc.
-        messageSource.setDefaultEncoding("UTF-8"); // Usa UTF-8 para que los textos se vean bien (tildes, ñ, etc.).
+        ResourceBundleMessageSource messageSource= new ResourceBundleMessageSource();
+        messageSource.setBasenames("messages");
+        messageSource.setDefaultEncoding("UTF-8");
         return messageSource;
+    }
+
+ /* Los siguiente métodos son para implementar el tema de seguridad dentro del proyecto
+*/
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/").setViewName("index");
+        registry.addViewController("/index").setViewName("index");
+        registry.addViewController("/login").setViewName("login");
+        registry.addViewController("/registro/nuevo").setViewName("/registro/nuevo");
+    }
+ 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests((request) -> request.requestMatchers(
+                "/","/index","/errores/**", "/carrito/**","/pruebas/**", "/reportes/**", "/registro/**", "/js/**", "/webjars/**")
+                .permitAll()
+                .requestMatchers(
+                        "/producto/nuevo","/producto/guardar", 
+                        "/producto/modificar/**","/producto/eliminar/**",
+                        "/categoria/nuevo","/categoria/guardar", 
+                        "/categoria/modificar/**","/categoria/eliminar/**",
+                        "/usuario/nuevo","/usuario/guardar",
+                        "/usuario/modificar/**","/usuario/eliminar/**", 
+                        "/reportes/**"
+                ).hasRole("ADMIN")
+                .requestMatchers(
+                        "/producto/listado", 
+                        "/categoria/listado", 
+                        "/usuario/listado"
+                ).hasAnyRole("ADMIN", "VENDEDOR")
+                .requestMatchers("/facturar/carrito")
+                .hasRole("USER"))
+                .formLogin((form) -> form
+                        .loginPage("/login").permitAll())
+                .logout((logout) -> logout.permitAll());
+        return http.build();
     }
 }
