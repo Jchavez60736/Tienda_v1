@@ -1,4 +1,5 @@
 package com.tienda.service.impl;
+
 import com.tienda.dao.UsuarioDao;
 import com.tienda.domain.Rol;
 import com.tienda.domain.Usuario;
@@ -16,7 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service("userDetailsService")
-public class UsuarioDetailsServiceImpl implements UsuarioDetailsService,UserDetailsService {
+public class UsuarioDetailsServiceImpl implements UsuarioDetailsService, UserDetailsService {
+    
     @Autowired
     private UsuarioDao usuarioDao;
     @Autowired
@@ -45,6 +47,6 @@ public class UsuarioDetailsServiceImpl implements UsuarioDetailsService,UserDeta
      roles.add(new SimpleGrantedAuthority(rol.getNombre()));
      }
      //Se retorna un User (de tipo UserDetails)
-     return new User(usuario.getUsername(),usuario.getPassword(),roles);
+     return new User(usuario.getUsername(), usuario.getPassword(), roles);
      }
 } 

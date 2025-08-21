@@ -20,10 +20,9 @@ import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
 @Configuration
 public class ProjectConfig implements WebMvcConfigurer {
- /* Los siguientes métodos son para incorporar el tema de internacionalización en el
-proyecto */
-
- /* localeResolver se utiliza para crear una sesión de cambio de idioma*/
+    /* Los siguientes métodos son para incorporar el tema de internacionalización en el proyecto */
+    
+    /* localeResolver se utiliza para crear una sesión de cambio de idioma*/
     @Bean
     public LocaleResolver localeResolver() {
         var slr = new SessionLocaleResolver();
@@ -32,19 +31,21 @@ proyecto */
         slr.setTimeZoneAttributeName("session.current.timezone");
         return slr;
     }
- /* localeChangeInterceptor se utiliza para crear un interceptor de cambio de idioma*/
+
+    /* localeChangeInterceptor se utiliza para crear un interceptor de cambio de idioma*/
     @Bean
     public LocaleChangeInterceptor localeChangeInterceptor() {
         var lci = new LocaleChangeInterceptor();
-        lci.setParamName("lang");
+        lci.setParamName("lang"); 
         return lci;
     }
-    
+
     @Override
     public void addInterceptors(InterceptorRegistry registro) {
         registro.addInterceptor(localeChangeInterceptor());
     }
- //Bean para poder acceder a los Messages.properties en código...
+
+    //Bean para poder acceder a los Messages.properties en código...
     @Bean("messageSource")
     public MessageSource messageSource() {
         ResourceBundleMessageSource messageSource= new ResourceBundleMessageSource();
@@ -52,41 +53,53 @@ proyecto */
         messageSource.setDefaultEncoding("UTF-8");
         return messageSource;
     }
-
- /* Los siguiente métodos son para implementar el tema de seguridad dentro del proyecto
-*/
+    
+    /* Los siguiente métodos son para implementar el tema de seguridad dentro del proyecto */
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("index");
         registry.addViewController("/index").setViewName("index");
         registry.addViewController("/login").setViewName("login");
         registry.addViewController("/registro/nuevo").setViewName("/registro/nuevo");
-    }
- 
-    @Bean
+ }
+
+@Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((request) -> request.requestMatchers(
-                "/","/index","/errores/**", "/carrito/**","/pruebas/**", "/reportes/**", "/registro/**", "/js/**", "/webjars/**")
-                .permitAll()
+        http
+                .authorizeHttpRequests((request) -> request
+                .requestMatchers("/","/index","/errores/**",
+                        "/carrito/**","/pruebas/**","/reportes/**",
+                        "/registro/**","/js/**","/webjars/**")
+                        .permitAll()
                 .requestMatchers(
-                        "/producto/nuevo","/producto/guardar", 
+                        "/producto/nuevo","/producto/guardar",
                         "/producto/modificar/**","/producto/eliminar/**",
-                        "/categoria/nuevo","/categoria/guardar", 
+                        "/categoria/nuevo","/categoria/guardar",
                         "/categoria/modificar/**","/categoria/eliminar/**",
                         "/usuario/nuevo","/usuario/guardar",
-                        "/usuario/modificar/**","/usuario/eliminar/**", 
+                        "/usuario/modificar/**","/usuario/eliminar/**",
                         "/reportes/**"
                 ).hasRole("ADMIN")
                 .requestMatchers(
-                        "/producto/listado", 
-                        "/categoria/listado", 
+                        "/producto/listado",
+                        "/categoria/listado",
                         "/usuario/listado"
                 ).hasAnyRole("ADMIN", "VENDEDOR")
                 .requestMatchers("/facturar/carrito")
-                .hasRole("USER"))
+                .hasRole("USER")
+                )
                 .formLogin((form) -> form
-                        .loginPage("/login").permitAll())
+                .loginPage("/login").permitAll())
                 .logout((logout) -> logout.permitAll());
         return http.build();
     }
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Autowired
+    public void configurerGlobal(AuthenticationManagerBuilder build) throws Exception {
+        build.userDetailsService(userDetailsService).passwordEncoder(new BCryptPasswordEncoder());
+    }
+    
+    
 }

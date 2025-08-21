@@ -48,7 +48,8 @@ public class PruebasController {
     }
     
     @PostMapping("/query1")
-    public String consultaQuery1(@RequestParam(value = "precioInf") double precioInf, @RequestParam(value = "precioSup") double precioSup, Model model) {
+    public String consultaQuery1(@RequestParam(value = "precioInf") double precioInf, 
+            @RequestParam(value = "precioSup") double precioSup, Model model) {
         var productos = productoService.findByPrecioBetweenOrderByDescripcion(precioInf, precioSup);
         model.addAttribute("productos", productos);
         model.addAttribute("precioInf", precioInf);
